@@ -1,10 +1,10 @@
 # Prediksi Tingkat Keparahan Site
 
-Project ini membangun model Random Forest untuk memprediksi severity maintenance site: minor (0) atau major (1).
+**Catatan:** Project ini adalah analisis pendukung dalam Tugas Akhir Data Warehouse (bukan fokus utama) dengan membangun model Random Forest untuk memprediksi severity maintenance site: minor (0) atau major (1).
 
 ## Data
 - Sumber: MySQL database datawarehouse_om
-- Fitur: scope_of_work, city, month, site_major_rate
+- Fitur: scope_of_work, city, month
 - Target: severity (mapping eksplisit minor=0, major=1)
 
 ## Alur Singkat
