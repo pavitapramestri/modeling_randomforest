@@ -257,15 +257,6 @@
     .sbox-val.r{color:var(--red)}
     .sbox-val.g{color:var(--green)}
 
-    .bar-labels{
-      display:flex;justify-content:space-between;
-      font-size:10px;font-weight:600;color:var(--gray-400);margin-bottom:5px;
-    }
-    .bar-track{height:6px;background:var(--green-soft);border-radius:99px;overflow:hidden}
-    .bar-fill{height:100%;border-radius:99px;transition:width .7s cubic-bezier(.4,0,.2,1);width:0%}
-    .bar-fill.major{background:var(--red)}
-    .bar-fill.minor{background:var(--green)}
-
     /* ── MID ROW ────────────────────────────────────── */
     .mid-row{display:grid;grid-template-columns:1fr;gap:14px;align-items:start}
 
@@ -384,7 +375,7 @@
       <div class="form-group">
         <label class="flabel" for="selKota">Kota / Kabupaten</label>
         <select class="fselect" id="selKota">
-          <option value="">— Pilih Kota —</option>
+          <option value="">Pilih Kota / Kabupaten </option>
           {% for kota in kota_list %}
           <option value="{{ kota }}">{{ kota }}</option>
           {% endfor %}
@@ -392,9 +383,9 @@
       </div>
 
       <div class="form-group">
-        <label class="flabel" for="selSite">Nama Site</label>
+        <label class="flabel" for="selSite">Kode Site</label>
         <select class="fselect" id="selSite" disabled>
-          <option value="">— Pilih Site —</option>
+          <option value="">Pilih Kode Site</option>
         </select>
       </div>
 
@@ -412,7 +403,7 @@
           <div class="info-val" id="iKota">—</div>
         </div>
         <div class="info-item">
-          <div class="info-lbl">Nama Site</div>
+          <div class="info-lbl">Kode Site</div>
           <div class="info-val" id="iSite">—</div>
         </div>
         <div class="info-item">
@@ -425,9 +416,8 @@
       <div class="model-meta">
         <div class="meta-head">Model Info</div>
         <div class="meta-row"><span class="mk">Algorithm</span><span class="mv">{{ model_stats.algorithm }}</span></div>
-        <div class="meta-row"><span class="mk">Accuracy</span><span class="mv">{{ model_stats.accuracy }}</span></div>
         <div class="meta-row"><span class="mk">F1-Score</span><span class="mv">{{ model_stats.f1_score }}</span></div>
-        <div class="meta-row"><span class="mk">CV Accuracy</span><span class="mv">{{ model_stats.cv_accuracy }}</span></div>
+        <div class="meta-row"><span class="mk">Accuracy</span><span class="mv">{{ model_stats.accuracy }}</span></div>
         <div class="meta-row"><span class="mk">Top Feature 1</span><span class="mv">{{ model_stats.top_feature_1 }}</span></div>
         <div class="meta-row"><span class="mk">Top Feature 2</span><span class="mv">{{ model_stats.top_feature_2 }}</span></div>
       </div>
@@ -441,7 +431,7 @@
     <div class="empty" id="emptyState">
       <div class="empty-icon">🔍</div>
       <div class="empty-title">BELUM ADA PREDIKSI</div>
-      <div class="empty-desc">Pilih kota dan nama site, lalu klik <strong>Prediksi Severity</strong>.</div>
+      <div class="empty-desc">Pilih Kota/Kabupaten dan Kode Site, lalu klik <strong>Prediksi Severity</strong>.</div>
     </div>
 
     <!-- RESULTS -->
@@ -449,7 +439,7 @@
 
       <!-- 1. PRED HERO -->
       <div>
-        <div class="sec-lbl">Hasil Prediksi Tingkat Keparahan</div>
+        <div class="sec-lbl">Hasil Prediksi</div>
         <div class="pred-card" id="predCard">
           <div class="pred-top">
             <div>
@@ -477,13 +467,6 @@
               <div class="sbox-lbl">Minor Count</div>
               <div class="sbox-val g" id="sMinor">—</div>
             </div>
-          </div>
-          <div class="bar-labels">
-            <span>Minor</span>
-            <span id="majorPctLbl">Major</span>
-          </div>
-          <div class="bar-track">
-            <div class="bar-fill" id="barFill"></div>
           </div>
         </div>
       </div>
@@ -687,11 +670,6 @@ btnP.addEventListener('click',async()=>{
     document.getElementById('sTotal').textContent=d.total_records;
     document.getElementById('sMajor').textContent=d.major_count;
     document.getElementById('sMinor').textContent=d.minor_count;
-
-    const pct=d.total_records>0?(d.major_count/d.total_records*100).toFixed(1):'0.0';
-    document.getElementById('majorPctLbl').textContent=`Major (${pct}%)`;
-    const bf=document.getElementById('barFill');
-    bf.style.width=pct+'%'; bf.className=`bar-fill ${sevL}`;
 
     const tbody=document.getElementById('hBody'); tbody.innerHTML='';
     if(!d.histori||d.histori.length===0){

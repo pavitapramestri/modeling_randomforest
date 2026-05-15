@@ -16,6 +16,11 @@ MODEL_STATS = {
     'top_feature_2': 'scope_of_work',
 }
 
+MONTH_NAMES = {
+    1: 'Januari', 2: 'Februari', 3: 'Maret', 4: 'April', 5: 'Mei', 6: 'Juni',
+    7: 'Juli', 8: 'Agustus', 9: 'September', 10: 'Oktober', 11: 'November', 12: 'Desember'
+}
+
 # Load CSV hasil prediksi
 CSV_PATH = os.path.join(os.path.dirname(__file__), 'hasil_prediksi_severity.csv')
 
@@ -29,6 +34,12 @@ def load_data():
                 df[col] = df[col].astype(str).str.replace(',', '.').astype(float)
         return df
     return pd.DataFrame()
+
+def month_to_name(month_num):
+    try:
+        return MONTH_NAMES.get(int(month_num), str(month_num))
+    except:
+        return str(month_num)
 
 @app.route('/')
 def landing():
@@ -83,6 +94,7 @@ def predict():
     # Format confidence score
     for row in histori_list:
         row['confidence_score'] = f"{float(row['confidence_score'])*100:.1f}%"
+        row['month'] = month_to_name(row['month'])
 
     result = {
         'site': site,
