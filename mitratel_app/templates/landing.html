@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard Analitik – Prediksi Severity</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --red:      #E31E24;
+      --red-dark: #B5151A;
+      --red-glow: rgba(227,30,36,0.18);
+      --red-soft: rgba(227,30,36,0.08);
+      --red-bdr:  rgba(227,30,36,0.2);
+      --white:    #FFFFFF;
+      --off:      #F8F8F8;
+      --gray-100: #F0F0F0;
+      --gray-200: #E0E0E0;
+      --gray-400: #9E9E9E;
+      --gray-600: #555555;
+      --black:    #111111;
+    }
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      font-family:'Plus Jakarta Sans',sans-serif;
+      background:var(--white);color:var(--black);
+      overflow-x:hidden;
+    }
+
+    /* NAV */
+    nav{
+      position:fixed;top:0;left:0;right:0;z-index:100;
+      display:flex;align-items:center;justify-content:space-between;
+      padding:0 48px;height:64px;
+      background:rgba(255,255,255,0.92);
+      backdrop-filter:blur(16px);
+      border-bottom:1px solid var(--gray-200);
+    }
+    .nav-brand{
+      font-family:'Bebas Neue',sans-serif;
+      font-size:20px;letter-spacing:2px;color:var(--black);
+      text-decoration:none;
+    }
+    .nav-brand span{color:var(--red)}
+    .nav-links{display:flex;align-items:center;gap:6px}
+    .nav-links a{
+      font-size:13px;font-weight:500;color:var(--gray-600);
+      text-decoration:none;padding:8px 16px;border-radius:6px;transition:all .18s;
+    }
+    .nav-links a:hover{color:var(--black);background:var(--gray-100)}
+    .nav-cta{
+      background:var(--red)!important;color:var(--white)!important;
+      padding:8px 20px!important;border-radius:6px!important;
+      font-weight:600!important;
+    }
+    .nav-cta:hover{background:var(--red-dark)!important;transform:translateY(-1px)}
+
+    /* HERO */
+    .hero{
+      min-height:100vh;
+      display:flex;flex-direction:column;
+      justify-content:center;align-items:flex-start;
+      padding:100px 80px 80px;
+      position:relative;overflow:hidden;
+    }
+    /* subtle grid */
+    .hero::before{
+      content:'';position:absolute;inset:0;
+      background-image:
+        linear-gradient(var(--gray-200) 1px,transparent 1px),
+        linear-gradient(90deg,var(--gray-200) 1px,transparent 1px);
+      background-size:60px 60px;
+      mask-image:radial-gradient(ellipse 80% 80% at 30% 50%,black 20%,transparent 80%);
+      opacity:.5;
+    }
+    /* red glow */
+    .hero::after{
+      content:'';position:absolute;
+      width:600px;height:600px;
+      background:radial-gradient(circle,rgba(227,30,36,.08) 0%,transparent 70%);
+      top:-100px;right:-100px;pointer-events:none;
+    }
+    .hero-eyebrow{
+      display:inline-flex;align-items:center;gap:8px;
+      background:var(--red-soft);border:1px solid var(--red-bdr);
+      border-radius:100px;padding:6px 16px;
+      font-size:11px;font-weight:600;color:var(--red);
+      letter-spacing:1.5px;text-transform:uppercase;
+      margin-bottom:28px;position:relative;
+      animation:fadeUp .6s ease both;
+    }
+    .hero-eyebrow::before{
+      content:'';width:6px;height:6px;border-radius:50%;
+      background:var(--red);animation:pulse 2s infinite;
+    }
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.3)}}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+    .hero-title{
+      font-family:'Bebas Neue',sans-serif;
+      font-size:clamp(56px,8vw,110px);
+      line-height:.92;letter-spacing:2px;
+      color:var(--black);margin-bottom:8px;
+      animation:fadeUp .6s .08s ease both;
+    }
+    .hero-title span{color:var(--red)}
+    .hero-ghost{
+      font-family:'Bebas Neue',sans-serif;
+      font-size:clamp(56px,8vw,110px);
+      line-height:.92;letter-spacing:2px;
+      color:var(--gray-200);margin-bottom:36px;
+      animation:fadeUp .6s .14s ease both;
+    }
+    .hero-desc{
+      max-width:480px;font-size:15px;line-height:1.75;
+      color:var(--gray-600);margin-bottom:44px;
+      animation:fadeUp .6s .2s ease both;
+      text-align:justify;
+    }
+    .hero-actions{
+      display:flex;gap:14px;align-items:center;
+      animation:fadeUp .6s .26s ease both;
+    }
+    .btn-primary{
+      display:inline-flex;align-items:center;gap:10px;
+      background:var(--red);color:var(--white);
+      font-weight:700;font-size:14px;padding:13px 28px;
+      border-radius:8px;text-decoration:none;
+      transition:all .2s;border:none;cursor:pointer;
+    }
+    .btn-primary:hover{background:var(--red-dark);transform:translateY(-2px);box-shadow:0 8px 28px var(--red-glow)}
+    .btn-secondary{
+      display:inline-flex;align-items:center;gap:10px;
+      color:var(--gray-600);font-weight:600;font-size:14px;
+      padding:13px 24px;border-radius:8px;
+      border:1.5px solid var(--gray-200);text-decoration:none;
+      transition:all .2s;background:transparent;
+    }
+    .btn-secondary:hover{color:var(--black);border-color:var(--gray-400)}
+
+    /* DATA WAREHOUSE */
+    .warehouse{
+      padding:84px 80px;
+      background:var(--white);
+      border-bottom:1.5px solid var(--gray-200);
+    }
+    .section-kicker{
+      font-size:10px;font-weight:700;color:var(--red);
+      text-transform:uppercase;letter-spacing:2px;margin-bottom:12px;
+    }
+    .section-title{
+      font-family:'Bebas Neue',sans-serif;
+      font-size:clamp(36px,4vw,56px);color:var(--black);
+      letter-spacing:1px;margin-bottom:18px;
+    }
+    .section-desc{
+      max-width:760px;font-size:15px;line-height:1.8;
+      color:var(--gray-600);margin-bottom:30px;
+      text-align:justify;
+    }
+    .warehouse-grid{
+      display:grid;grid-template-columns:repeat(3,1fr);gap:14px;
+      margin-bottom:18px;
+    }
+    .warehouse-card{
+      background:var(--off);border:1.5px solid var(--gray-200);
+      border-radius:12px;padding:24px 22px;
+      min-height:180px;
+    }
+    .warehouse-no{
+      font-family:'Bebas Neue',sans-serif;
+      font-size:40px;line-height:1;color:var(--red);
+      margin-bottom:12px;
+    }
+    .warehouse-hd{
+      font-size:16px;font-weight:700;color:var(--black);margin-bottom:10px;
+    }
+    .warehouse-txt{
+      font-size:13px;line-height:1.7;color:var(--gray-600);
+    }
+
+    /* OPERATIONAL DASHBOARD */
+    .operational{
+      padding:84px 80px;
+      background:var(--off);
+      border-bottom:1.5px solid var(--gray-200);
+    }
+    .op-grid{
+      display:grid;grid-template-columns:1.1fr .9fr;gap:18px;align-items:start;
+    }
+    .op-panel{
+      background:var(--white);border:1.5px solid var(--gray-200);
+      border-radius:12px;padding:22px;
+    }
+    .op-list{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+    .op-item{
+      background:var(--off);border:1.5px solid var(--gray-200);
+      border-radius:10px;padding:14px 14px 12px;
+    }
+    .op-k{font-size:10px;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px}
+    .op-v{font-size:14px;font-weight:700;color:var(--black)}
+      .op-panel .section-desc{text-align:justify}
+    .op-figure{
+      background:linear-gradient(180deg,#fff, #fafafa);
+      border:1.5px dashed var(--gray-200);border-radius:12px;
+      min-height:260px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+      text-align:center;padding:24px;
+    }
+    .op-figure strong{font-size:18px;margin-bottom:8px}
+    .op-figure p{max-width:360px;font-size:13px;line-height:1.7;color:var(--gray-600)}
+
+    /* STATS STRIP */
+    .stats-strip{
+      position:absolute;bottom:60px;right:80px;
+      display:flex;gap:2px;
+      animation:fadeUp .6s .32s ease both;
+    }
+    .stat-pill{
+      background:var(--white);border:1.5px solid var(--gray-200);
+      padding:18px 26px;text-align:center;min-width:110px;
+    }
+    .stat-pill:first-child{border-radius:10px 0 0 10px}
+    .stat-pill:last-child{border-radius:0 10px 10px 0}
+    .stat-num{
+      font-family:'Bebas Neue',sans-serif;
+      font-size:32px;color:var(--red);line-height:1;margin-bottom:4px;
+    }
+    .stat-lbl{font-size:10px;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:1px}
+
+    /* HOW IT WORKS — clean 3 steps */
+    .how{
+      padding:80px 80px;
+      background:var(--off);
+      border-top:1.5px solid var(--gray-200);
+      border-bottom:1.5px solid var(--gray-200);
+    }
+    .how-label{
+      font-size:10px;font-weight:700;color:var(--red);
+      text-transform:uppercase;letter-spacing:2px;margin-bottom:12px;
+    }
+    .how-title{
+      font-family:'Bebas Neue',sans-serif;
+      font-size:clamp(36px,4vw,56px);color:var(--black);
+      letter-spacing:1px;margin-bottom:48px;
+    }
+    .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
+    .step{
+      background:var(--white);padding:36px 32px;
+      border:1.5px solid var(--gray-200);
+    }
+    .step:first-child{border-radius:10px 0 0 10px}
+    .step:last-child{border-radius:0 10px 10px 0}
+    .step-n{
+      font-family:'Bebas Neue',sans-serif;
+      font-size:48px;color:var(--gray-200);
+      line-height:1;margin-bottom:16px;
+    }
+    .step-title{font-size:15px;font-weight:700;color:var(--black);margin-bottom:8px}
+    .step-desc{font-size:13px;color:var(--gray-600);line-height:1.65}
+
+    /* CTA */
+    .cta{
+      padding:80px;text-align:center;
+      background:var(--white);
+    }
+    .cta-title{
+      font-family:'Bebas Neue',sans-serif;
+      font-size:clamp(40px,5vw,72px);color:var(--black);
+      letter-spacing:1px;margin-bottom:20px;line-height:.95;
+    }
+    .cta-title span{color:var(--red)}
+    .cta-desc{
+      font-size:15px;color:var(--gray-600);
+      max-width:480px;margin:0 auto 36px;line-height:1.7;
+    }
+    .cta-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+
+    /* FOOTER */
+    footer{
+      background:var(--black);
+      padding:28px 80px;
+      display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:12px;
+      text-align:center;
+    }
+    footer span{font-size:12px;color:rgba(255,255,255,.3)}
+    footer .red{color:var(--red)}
+
+    @media(max-width:900px){
+      nav{padding:0 24px}
+      .hero{padding:100px 32px 80px}
+      .hero-title,.hero-ghost{font-size:clamp(48px,10vw,80px)}
+      .stats-strip{position:static;margin-top:40px;flex-wrap:wrap}
+      .warehouse{padding:60px 32px}
+      .warehouse-grid,.op-grid,.op-list{grid-template-columns:1fr}
+      .operational{padding:60px 32px}
+      .how{padding:60px 32px}
+      .steps{grid-template-columns:1fr}
+      .step:first-child,.step:last-child{border-radius:0}
+      .step:first-child{border-radius:10px 10px 0 0}
+      .step:last-child{border-radius:0 0 10px 10px}
+      .cta{padding:60px 32px}
+      footer{padding:24px 32px}
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-brand">Landing Page</a>
+  <div class="nav-links">
+    <a href="{{ tableau_url }}" target="_blank">Dashboard Operasional ↗</a>
+    <a href="/dashboard" class="nav-cta">Dashboard Analitik →</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <h1 class="hero-title">SATU DATA,<br><span>DUA HASIL</span></h1>
+  <div class="hero-ghost">WAREHOUSE &amp; MINING</div>
+  <p class="hero-desc">
+    Dari satu sumber data yang terintegrasi, sistem menghasilkan 2 (dua) keluaran utama: dashboard operasional untuk pemantauan operasional dan kinerja, serta dashboard analitik untuk prediksi tingkat severity maintenance.
+  </p>
+  <div class="hero-actions">
+    <a href="/dashboard" class="btn-primary">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      Mulai Prediksi
+    </a>
+    <a href="{{ tableau_url }}" target="_blank" class="btn-secondary">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Dashboard Operasional
+    </a>
+  </div>
+  <div class="stats-strip">
+    <div class="stat-pill"><div class="stat-num">{{ model_stats.training_rows }}</div><div class="stat-lbl">Data Maintenance</div></div>
+    <div class="stat-pill"><div class="stat-num">{{ model_stats.accuracy }}</div><div class="stat-lbl">Accuracy</div></div>
+    <div class="stat-pill"><div class="stat-num">{{ model_stats.f1_score }}</div><div class="stat-lbl">F1-Score</div></div>
+    <div class="stat-pill"><div class="stat-num">{{ model_stats.cv_accuracy }}</div><div class="stat-lbl">CV Accuracy</div></div>
+  </div>
+</section>
+
+<section class="warehouse" id="hasil">
+  <div class="section-kicker">Gambaran Umum</div>
+  <div class="section-title">DUA KELUARAN UTAMA SISTEM</div>
+  <p class="section-desc">
+    Seluruh proses berbasis pada data warehouse <strong>datawarehouse_om</strong>. Dari sumber data yang sama ini, sistem membentuk dua keluaran yang saling melengkapi: pemantauan operasional dan analisis prediktif.
+  </p>
+
+  <div class="warehouse-grid">
+    <div class="warehouse-card">
+      <div class="warehouse-no">01</div>
+      <div class="warehouse-hd">Dashboard Operasional</div>
+      <div class="warehouse-txt">Menyajikan ringkasan kondisi operasional secara cepat, meliputi total maintenance, SLA, durasi pekerjaan, sebaran area, dan detail aktivitas.</div>
+    </div>
+    <div class="warehouse-card">
+      <div class="warehouse-no">02</div>
+      <div class="warehouse-hd">Dashboard Analitik</div>
+      <div class="warehouse-txt">Menyajikan hasil prediksi kategori maintenance (Minor atau Major), dilengkapi confidence score dan histori site sebagai dasar analisis.</div>
+    </div>
+    <div class="warehouse-card">
+      <div class="warehouse-no">03</div>
+      <div class="warehouse-hd">Satu Sumber Data</div>
+      <div class="warehouse-txt">Kedua dashboard memanfaatkan sumber data yang sama, namun ditujukan untuk kebutuhan yang berbeda: monitoring dan prediksi.</div>
+    </div>
+  </div>
+</section>
+
+<section class="operational">
+  <div class="section-kicker">Perbedaan Fungsi</div>
+  <div class="section-title">OPERASIONAL VS ANALITIK</div>
+  <div class="op-grid">
+    <div class="op-panel">
+      <div class="section-desc" style="margin-bottom:18px">
+        <strong>Dashboard operasional</strong> berfungsi sebagai pusat pemantauan kinerja. Dashboard ini menjawab kebutuhan utama: bagaimana kondisi maintenance saat ini dan bagaimana kualitas layanan berjalan.
+      </div>
+      <div class="op-list">
+        <div class="op-item"><div class="op-k">Total Maintenance</div><div class="op-v">52.427</div></div>
+        <div class="op-item"><div class="op-k">Rata-Rata Durasi (Hari)</div><div class="op-v">3,290</div></div>
+        <div class="op-item"><div class="op-k">SLA Compliance Rate</div><div class="op-v">98,1%</div></div>
+        <div class="op-item"><div class="op-k">SLA Breach</div><div class="op-v">1,5%</div></div>
+      </div>
+    </div>
+    <div class="op-figure">
+      <strong>Dashboard Analitik</strong>
+      <p>
+        Dashboard analitik berfungsi untuk mendukung pengambilan keputusan berbasis prediksi, khususnya dalam mengidentifikasi kemungkinan kategori severity pada aktivitas maintenance berikutnya.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="how">
+  <div class="how-label">Cara Kerja</div>
+  <div class="how-title">TIGA LANGKAH MUDAH</div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-n">01</div>
+      <div class="step-title">Pilih Kota &amp; Site</div>
+      <div class="step-desc">Pilih kota/kabupaten dan nama site dari dropdown di dashboard analitik.</div>
+    </div>
+    <div class="step">
+      <div class="step-n">02</div>
+      <div class="step-title">Model Menganalisis</div>
+      <div class="step-desc">Model Random Forest menganalisis data historis maintenance site secara otomatis.</div>
+    </div>
+    <div class="step">
+      <div class="step-n">03</div>
+      <div class="step-title">Hasil &amp; Tindakan</div>
+      <div class="step-desc">Tampil prediksi Minor/Major beserta confidence score sebagai dasar pengambilan keputusan.</div>
+    </div>
+  </div>
+</section>
+
+<section class="cta">
+  <div class="cta-title">AKSES<br><span>DUA DASHBOARD</span></div>
+  <p class="cta-desc">Buka dashboard operasional untuk pemantauan kinerja saat ini, atau lanjutkan ke dashboard analitik untuk melihat hasil prediksi severity berbasis data warehouse yang sama.</p>
+  <div class="cta-btns">
+    <a href="{{ tableau_url }}" target="_blank" class="btn-primary">Dashboard Operasional →</a>
+    <a href="/dashboard" class="btn-secondary">Dashboard Analitik ↗</a>
+  </div>
+</section>
+
+<footer>
+  <span>© Divisi Operation &amp; Maintenance</span>
+</footer>
+
+</body>
+</html>

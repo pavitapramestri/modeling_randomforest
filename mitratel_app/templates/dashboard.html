@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard Analitik</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <style>
+    /* ── TOKENS ────────────────────────────────────────── */
+    :root{
+      --red:       #E31E24;
+      --red-dark:  #B5151A;
+      --red-glow:  rgba(227,30,36,0.18);
+      --red-soft:  rgba(227,30,36,0.07);
+      --red-bdr:   rgba(227,30,36,0.2);
+      --green:     #16a34a;
+      --green-soft:rgba(22,163,74,0.08);
+      --green-bdr: rgba(22,163,74,0.2);
+      --white:     #FFFFFF;
+      --off:       #F8F8F8;
+      --gray-50:   #F5F5F5;
+      --gray-100:  #EEEEEE;
+      --gray-200:  #E0E0E0;
+      --gray-400:  #9E9E9E;
+      --gray-600:  #555555;
+      --black:     #111111;
+      --sidebar-w: 272px;
+      --topbar-h:  58px;
+      --radius:    8px;
+    }
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    body{
+      font-family:'Plus Jakarta Sans',sans-serif;
+      background:var(--off);color:var(--black);
+      display:flex;flex-direction:column;height:100vh;overflow:hidden;
+    }
+
+    /* ── TOPBAR ─────────────────────────────────────── */
+    .topbar{
+      height:var(--topbar-h);background:var(--white);
+      border-bottom:1.5px solid var(--gray-200);
+      display:flex;align-items:center;justify-content:space-between;
+      padding:0 24px;flex-shrink:0;z-index:200;
+    }
+    .topbar-left{display:flex;align-items:center;gap:16px;min-width:0;overflow:hidden}
+    .topbar-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+    .brand{
+      font-family:'Bebas Neue',sans-serif;
+      font-size:18px;letter-spacing:2px;color:var(--black);
+      text-decoration:none;flex-shrink:0;
+    }
+    .brand span{color:var(--red)}
+    .topbar-sep{width:1.5px;height:20px;background:var(--gray-200);flex-shrink:0}
+    .topbar-title{
+      font-size:12px;font-weight:600;color:var(--gray-400);
+      letter-spacing:.4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    }
+    .btn-nav{
+      display:inline-flex;align-items:center;gap:6px;
+      font-family:'Plus Jakarta Sans',sans-serif;
+      font-size:12px;font-weight:600;
+      padding:7px 15px;border-radius:6px;text-decoration:none;
+      cursor:pointer;transition:all .18s;border:1.5px solid transparent;white-space:nowrap;
+    }
+    .btn-ghost{
+      color:var(--gray-600);border-color:var(--gray-200);background:transparent;
+    }
+    .btn-ghost:hover{color:var(--black);border-color:var(--gray-400)}
+    .btn-red{
+      background:var(--red-soft);border-color:var(--red-bdr);color:var(--red);
+    }
+    .btn-red:hover{background:var(--red);color:var(--white);border-color:var(--red)}
+
+    /* ── LAYOUT ─────────────────────────────────────── */
+    .main-layout{display:flex;flex:1;overflow:hidden}
+
+    /* ── SIDEBAR ────────────────────────────────────── */
+    .sidebar{
+      width:var(--sidebar-w);min-width:var(--sidebar-w);
+      background:var(--white);
+      border-right:1.5px solid var(--gray-200);
+      display:flex;flex-direction:column;
+      overflow-y:auto;flex-shrink:0;
+    }
+    .sidebar-inner{padding:22px 18px;display:flex;flex-direction:column;flex:1}
+    .slabel{
+      font-size:9px;font-weight:700;color:var(--gray-400);
+      text-transform:uppercase;letter-spacing:2px;margin-bottom:14px;
+    }
+    .form-group{margin-bottom:12px}
+    .flabel{
+      display:block;font-size:10px;font-weight:600;color:var(--gray-600);
+      text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;
+    }
+    .fselect{
+      width:100%;background:var(--gray-50);
+      border:1.5px solid var(--gray-200);border-radius:var(--radius);
+      color:var(--black);font-family:'Plus Jakarta Sans',sans-serif;
+      font-size:13px;font-weight:400;padding:9px 34px 9px 12px;
+      appearance:none;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%239E9E9E' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+      background-repeat:no-repeat;background-position:right 12px center;
+      cursor:pointer;transition:border-color .18s;line-height:1.4;
+    }
+    .fselect:focus{outline:none;border-color:var(--red)}
+    .fselect:disabled{opacity:.45;cursor:not-allowed}
+    .fselect option{background:var(--white)}
+    .btn-predict{
+      width:100%;background:var(--red);color:var(--white);
+      font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;
+      padding:11px 16px;border-radius:var(--radius);border:none;cursor:pointer;
+      transition:all .18s;display:flex;align-items:center;justify-content:center;gap:8px;
+      margin-top:4px;
+    }
+    .btn-predict:hover:not(:disabled){
+      background:var(--red-dark);transform:translateY(-1px);box-shadow:0 6px 18px var(--red-glow)
+    }
+    .btn-predict:disabled{opacity:.35;cursor:not-allowed;transform:none;box-shadow:none}
+    .sdiv{height:1.5px;background:var(--gray-100);margin:20px 0;flex-shrink:0}
+    .info-item{margin-bottom:12px}
+    .info-lbl{font-size:9px;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:3px}
+    .info-val{font-size:13px;font-weight:600;color:var(--black);word-break:break-all}
+
+    /* model meta */
+    .model-meta{
+      background:var(--gray-50);border:1.5px solid var(--gray-100);
+      border-radius:var(--radius);padding:14px 16px;margin-top:auto;
+    }
+    .meta-head{
+      font-size:9px;font-weight:700;color:var(--red);
+      text-transform:uppercase;letter-spacing:2px;margin-bottom:12px;
+    }
+    .meta-row{
+      display:flex;justify-content:space-between;align-items:center;
+      padding:6px 0;border-bottom:1.5px solid var(--gray-100);
+    }
+    .meta-row:last-child{border-bottom:none;padding-bottom:0}
+    .mk{font-size:11px;color:var(--gray-600)}
+    .mv{font-size:11px;font-weight:700;color:var(--black);text-align:right}
+
+    /* ── CONTENT ────────────────────────────────────── */
+    .content{
+      flex:1;overflow-y:auto;padding:20px;
+      display:flex;flex-direction:column;gap:14px;
+      background:var(--off);min-width:0;
+    }
+
+    /* empty */
+    .empty{
+      flex:1;display:flex;flex-direction:column;
+      align-items:center;justify-content:center;
+      gap:14px;text-align:center;padding:40px;
+    }
+    .empty-icon{font-size:52px;opacity:.2}
+    .empty-title{
+      font-family:'Bebas Neue',sans-serif;
+      font-size:28px;letter-spacing:2px;color:var(--gray-400);
+    }
+    .empty-desc{font-size:13px;color:var(--gray-400);max-width:280px;line-height:1.7}
+
+    /* result */
+    .results{display:none;flex-direction:column;gap:14px}
+    .results.show{display:flex}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    .results.show>*{animation:fadeUp .35s ease both}
+    .results.show>*:nth-child(2){animation-delay:.06s}
+    .results.show>*:nth-child(3){animation-delay:.12s}
+    .results.show>*:nth-child(4){animation-delay:.18s}
+
+    /* section label */
+    .sec-lbl{
+      font-size:9px;font-weight:700;color:var(--gray-400);
+      text-transform:uppercase;letter-spacing:2px;margin-bottom:8px;
+    }
+
+    /* card */
+    .card{
+      background:var(--white);border:1.5px solid var(--gray-200);
+      border-radius:var(--radius);overflow:hidden;
+    }
+    .card-hd{
+      padding:13px 18px;border-bottom:1.5px solid var(--gray-100);
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+    }
+    .card-title{
+      font-family:'Bebas Neue',sans-serif;
+      font-size:16px;letter-spacing:1px;color:var(--black);line-height:1;
+    }
+    .card-sub{font-size:10px;font-weight:600;color:var(--gray-400);white-space:nowrap}
+
+    /* ── PRED CARD ──────────────────────────────────── */
+    .pred-card{
+      background:var(--white);border:1.5px solid var(--gray-200);
+      border-radius:var(--radius);padding:24px 26px 20px;
+      position:relative;overflow:hidden;
+    }
+    .pred-card::before{
+      content:'';position:absolute;top:0;left:0;bottom:0;
+      width:4px;border-radius:var(--radius) 0 0 var(--radius);
+      background:var(--gray-200);transition:background .3s;
+    }
+    .pred-card.major::before{background:var(--red)}
+    .pred-card.minor::before{background:var(--green)}
+
+    .pred-top{
+      display:flex;align-items:flex-start;justify-content:space-between;
+      gap:20px;margin-bottom:20px;flex-wrap:wrap;
+    }
+    .pred-eyebrow{
+      font-size:9px;font-weight:700;color:var(--gray-400);
+      text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;
+    }
+    .pred-badge{
+      display:inline-flex;align-items:center;gap:9px;
+      padding:9px 20px;border-radius:6px;border:1.5px solid transparent;
+    }
+    .pred-badge.major{background:var(--red-soft);border-color:var(--red-bdr)}
+    .pred-badge.minor{background:var(--green-soft);border-color:var(--green-bdr)}
+    .pdot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+    .pred-badge.major .pdot{background:var(--red)}
+    .pred-badge.minor .pdot{background:var(--green)}
+    .pred-sev{
+      font-family:'Bebas Neue',sans-serif;
+      font-size:28px;letter-spacing:3px;line-height:1;
+    }
+    .pred-badge.major .pred-sev{color:var(--red)}
+    .pred-badge.minor .pred-sev{color:var(--green)}
+
+    .pred-right{text-align:right;flex-shrink:0}
+    .pconf-lbl{
+      font-size:9px;font-weight:700;color:var(--gray-400);
+      text-transform:uppercase;letter-spacing:2px;margin-bottom:6px;
+    }
+    .pconf-val{
+      font-family:'Bebas Neue',sans-serif;
+      font-size:52px;color:var(--black);letter-spacing:2px;line-height:1;
+    }
+
+    .pred-stats{
+      display:grid;grid-template-columns:repeat(3,1fr);
+      gap:10px;margin-bottom:18px;
+    }
+    .sbox{
+      background:var(--gray-50);border:1.5px solid var(--gray-100);
+      border-radius:6px;padding:12px 14px;
+    }
+    .sbox-lbl{
+      font-size:9px;font-weight:700;color:var(--gray-400);
+      text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;
+    }
+    .sbox-val{
+      font-family:'Bebas Neue',sans-serif;font-size:28px;
+      color:var(--black);line-height:1;letter-spacing:1px;
+    }
+    .sbox-val.r{color:var(--red)}
+    .sbox-val.g{color:var(--green)}
+
+    .bar-labels{
+      display:flex;justify-content:space-between;
+      font-size:10px;font-weight:600;color:var(--gray-400);margin-bottom:5px;
+    }
+    .bar-track{height:6px;background:var(--green-soft);border-radius:99px;overflow:hidden}
+    .bar-fill{height:100%;border-radius:99px;transition:width .7s cubic-bezier(.4,0,.2,1);width:0%}
+    .bar-fill.major{background:var(--red)}
+    .bar-fill.minor{background:var(--green)}
+
+    /* ── MID ROW ────────────────────────────────────── */
+    .mid-row{display:grid;grid-template-columns:1fr;gap:14px;align-items:start}
+
+    /* factors */
+    .flist{padding:6px 18px 18px}
+    .fitem{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1.5px solid var(--gray-100)}
+    .fitem:last-child{border-bottom:none;padding-bottom:0}
+    .fnum{
+      width:26px;height:26px;flex-shrink:0;
+      background:var(--red-soft);border:1.5px solid var(--red-bdr);
+      border-radius:5px;display:flex;align-items:center;justify-content:center;
+      font-family:'Bebas Neue',sans-serif;font-size:14px;color:var(--red);line-height:1;
+    }
+    .fname{font-size:13px;font-weight:700;color:var(--black);margin-bottom:2px}
+    .ftag{font-size:10px;color:var(--gray-400)}
+
+    /* histori */
+    .tbl-wrap{overflow-x:auto}
+    .htbl{width:100%;border-collapse:collapse;font-size:12px;min-width:460px}
+    .htbl th{
+      padding:9px 14px;font-size:9px;font-weight:700;
+      color:var(--gray-400);text-transform:uppercase;letter-spacing:1px;
+      text-align:left;background:var(--gray-50);
+      border-bottom:1.5px solid var(--gray-100);white-space:nowrap;
+    }
+    .htbl td{
+      padding:9px 14px;color:var(--gray-600);
+      border-bottom:1.5px solid var(--gray-50);vertical-align:middle;
+    }
+    .htbl tr:last-child td{border-bottom:none}
+    .htbl tr:hover td{background:var(--gray-50)}
+    .badge{
+      display:inline-flex;align-items:center;
+      font-size:10px;font-weight:700;padding:3px 8px;
+      border-radius:4px;letter-spacing:.5px;white-space:nowrap;
+    }
+    .bm{background:var(--red-soft);color:var(--red);border:1px solid var(--red-bdr)}
+    .bn{background:var(--green-soft);color:var(--green);border:1px solid var(--green-bdr)}
+
+    /* ── MAP choropleth ─────────────────────────────── */
+    #map{height:320px}
+    .map-legend{display:flex;align-items:center;gap:14px}
+    .leg-item{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--gray-600)}
+    .leg-dot{width:9px;height:9px;border-radius:50%}
+
+    /* gradient scale legend */
+    .choropleth-legend{
+      display:flex;align-items:center;gap:8px;
+    }
+    .grad-bar{
+      width:80px;height:10px;border-radius:3px;
+      background:linear-gradient(to right,#fff9f9,#E31E24);
+      border:1px solid var(--gray-200);
+    }
+    .grad-label{font-size:10px;font-weight:600;color:var(--gray-400)}
+
+    /* spinner */
+    .spinner{
+      display:none;width:15px;height:15px;
+      border:2px solid rgba(255,255,255,.3);
+      border-top-color:var(--white);border-radius:50%;
+      animation:spin .7s linear infinite;flex-shrink:0;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* scrollbar */
+    ::-webkit-scrollbar{width:4px}
+    ::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{background:var(--gray-200);border-radius:2px}
+
+    /* ── RESPONSIVE ─────────────────────────────────── */
+    @media(max-width:1100px){.mid-row{grid-template-columns:1fr}}
+    @media(max-width:860px){:root{--sidebar-w:230px}.pconf-val{font-size:40px}}
+    @media(max-width:680px){
+      body{overflow:auto}
+      .main-layout{flex-direction:column;overflow:visible}
+      .sidebar{width:100%;min-width:unset;border-right:none;border-bottom:1.5px solid var(--gray-200)}
+      .content{overflow:visible}
+      .pred-top{flex-direction:column;gap:12px}
+      .pred-right{text-align:left}
+      .topbar-title,.topbar-sep{display:none}
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="topbar-left">
+    <a href="/" class="brand">Landing Page</a>
+    <div class="topbar-sep"></div>
+    <div class="topbar-title">Dashboard Analitik</div>
+  </div>
+  <div class="topbar-right">
+    <a href="/" class="btn-nav btn-ghost">← Beranda</a>
+    <a href="{{ tableau_url }}" target="_blank" class="btn-nav btn-red">
+      <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <rect x="3" y="3" width="7" height="7" rx="1"/>
+        <rect x="14" y="3" width="7" height="7" rx="1"/>
+        <rect x="14" y="14" width="7" height="7" rx="1"/>
+        <rect x="3" y="14" width="7" height="7" rx="1"/>
+      </svg>
+      Dashboard Operasional ↗
+    </a>
+  </div>
+</header>
+
+<!-- MAIN -->
+<div class="main-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+      <div class="slabel">Pilih Site</div>
+
+      <div class="form-group">
+        <label class="flabel" for="selKota">Kota / Kabupaten</label>
+        <select class="fselect" id="selKota">
+          <option value="">— Pilih Kota —</option>
+          {% for kota in kota_list %}
+          <option value="{{ kota }}">{{ kota }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="flabel" for="selSite">Nama Site</label>
+        <select class="fselect" id="selSite" disabled>
+          <option value="">— Pilih Site —</option>
+        </select>
+      </div>
+
+      <button class="btn-predict" id="btnP" disabled>
+        <div class="spinner" id="spin"></div>
+        <span id="btnTxt">Prediksi Severity</span>
+      </button>
+
+      <div class="sdiv"></div>
+
+      <div id="sInfo" style="display:none">
+        <div class="slabel">Info Site</div>
+        <div class="info-item">
+          <div class="info-lbl">Kota / Kabupaten</div>
+          <div class="info-val" id="iKota">—</div>
+        </div>
+        <div class="info-item">
+          <div class="info-lbl">Nama Site</div>
+          <div class="info-val" id="iSite">—</div>
+        </div>
+        <div class="info-item">
+          <div class="info-lbl">Total Records</div>
+          <div class="info-val" id="iTotal">—</div>
+        </div>
+        <div class="sdiv"></div>
+      </div>
+
+      <div class="model-meta">
+        <div class="meta-head">Model Info</div>
+        <div class="meta-row"><span class="mk">Algorithm</span><span class="mv">{{ model_stats.algorithm }}</span></div>
+        <div class="meta-row"><span class="mk">Accuracy</span><span class="mv">{{ model_stats.accuracy }}</span></div>
+        <div class="meta-row"><span class="mk">F1-Score</span><span class="mv">{{ model_stats.f1_score }}</span></div>
+        <div class="meta-row"><span class="mk">CV Accuracy</span><span class="mv">{{ model_stats.cv_accuracy }}</span></div>
+        <div class="meta-row"><span class="mk">Top Feature 1</span><span class="mv">{{ model_stats.top_feature_1 }}</span></div>
+        <div class="meta-row"><span class="mk">Top Feature 2</span><span class="mv">{{ model_stats.top_feature_2 }}</span></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- CONTENT -->
+  <main class="content">
+
+    <!-- EMPTY -->
+    <div class="empty" id="emptyState">
+      <div class="empty-icon">🔍</div>
+      <div class="empty-title">BELUM ADA PREDIKSI</div>
+      <div class="empty-desc">Pilih kota dan nama site, lalu klik <strong>Prediksi Severity</strong>.</div>
+    </div>
+
+    <!-- RESULTS -->
+    <div class="results" id="results">
+
+      <!-- 1. PRED HERO -->
+      <div>
+        <div class="sec-lbl">Hasil Prediksi Tingkat Keparahan</div>
+        <div class="pred-card" id="predCard">
+          <div class="pred-top">
+            <div>
+              <div class="pred-eyebrow">Severity Level</div>
+              <div class="pred-badge" id="predBadge">
+                <span class="pdot"></span>
+                <span class="pred-sev" id="predSev">—</span>
+              </div>
+            </div>
+            <div class="pred-right">
+              <div class="pconf-lbl">Confidence Score</div>
+              <div class="pconf-val" id="pConf">—</div>
+            </div>
+          </div>
+          <div class="pred-stats">
+            <div class="sbox">
+              <div class="sbox-lbl">Total Records</div>
+              <div class="sbox-val" id="sTotal">—</div>
+            </div>
+            <div class="sbox">
+              <div class="sbox-lbl">Major Count</div>
+              <div class="sbox-val r" id="sMajor">—</div>
+            </div>
+            <div class="sbox">
+              <div class="sbox-lbl">Minor Count</div>
+              <div class="sbox-val g" id="sMinor">—</div>
+            </div>
+          </div>
+          <div class="bar-labels">
+            <span>Minor</span>
+            <span id="majorPctLbl">Major</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill" id="barFill"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. MID ROW -->
+      <div class="mid-row">
+        <div class="card">
+          <div class="card-hd">
+            <div class="card-title">HISTORI MAINTENANCE</div>
+            <span class="card-sub">10 Record Terakhir</span>
+          </div>
+          <div class="tbl-wrap">
+            <table class="htbl">
+              <thead>
+                <tr>
+                  <th>Bulan</th><th>Scope of Work</th>
+                  <th>Aktual</th><th>Prediksi</th><th>Confidence</th>
+                </tr>
+              </thead>
+              <tbody id="hBody">
+                <tr><td colspan="5" style="text-align:center;padding:22px;color:var(--gray-400)">Belum ada data</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. MAP CHOROPLETH -->
+      <div class="card">
+        <div class="card-hd">
+          <div class="card-title">SEBARAN MAJOR SEVERITY PER AREA</div>
+          <div class="choropleth-legend">
+            <span class="grad-label">Rendah</span>
+            <div class="grad-bar"></div>
+            <span class="grad-label">Tinggi</span>
+          </div>
+        </div>
+        <div id="map"></div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+/* ── CHOROPLETH MAP ─────────────────────────────────── */
+let map, mapReady=false;
+let geojsonLayer=null;
+
+function initMap(){
+  if(mapReady) return;
+  map=L.map('map',{zoomControl:true,scrollWheelZoom:false}).setView([-7.5,112.5],8);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png',
+    {attribution:'©OpenStreetMap ©CARTO',maxZoom:19}).addTo(map);
+  mapReady=true;
+}
+
+/* GeoJSON Jawa Timur sederhana per kota/kabupaten */
+/* Kita buat choropleth dengan circle markers berukuran proporsional + warna gradient */
+let markers=[];
+
+function majorRateToColor(rate){
+  /* 0% → putih, 100% → merah #E31E24 */
+  const r=227, g=Math.round(30+(1-rate/100)*225), b=Math.round(36+(1-rate/100)*219);
+  return `rgb(${r},${Math.max(30,g)},${Math.max(36,b)})`;
+}
+
+const COORDS={
+  'kota surabaya':[-7.2575,112.7521],
+  'kota malang':[-7.9666,112.6326],
+  'kabupaten malang':[-8.05,112.5],
+  'kota/kab sidoarjo':[-7.4478,112.7183],
+  'kabupaten sidoarjo':[-7.4478,112.7183],
+  'kota/kab pasuruan':[-7.6455,112.9072],
+  'kabupaten pasuruan':[-7.6455,112.9072],
+  'kota/kab blitar':[-8.0945,112.1621],
+  'kabupaten blitar':[-8.0945,112.1621],
+  'kabupaten lumajang':[-8.1289,113.2226],
+  'kabupaten jember':[-8.1845,113.668],
+  'kota/kab probolinggo':[-7.7543,113.2159],
+  'kabupaten probolinggo':[-7.7543,113.2159],
+  'kabupaten banyuwangi':[-8.2198,114.3691],
+  'kabupaten bondowoso':[-7.9125,113.8202],
+  'kabupaten situbondo':[-7.7062,114.008],
+  'kabupaten lamongan':[-7.1179,112.4137],
+  'kabupaten tuban':[-6.8943,112.0527],
+  'kabupaten bojonegoro':[-7.1509,111.8816],
+  'kabupaten ngawi':[-7.4082,111.4469],
+  'kota/kab madiun':[-7.6298,111.5239],
+  'kabupaten madiun':[-7.6298,111.5239],
+  'kabupaten magetan':[-7.6475,111.3294],
+  'kabupaten nganjuk':[-7.6033,111.9033],
+  'kota/kab kediri':[-7.8168,112.011],
+  'kabupaten kediri':[-7.8168,112.011],
+  'kabupaten tulungagung':[-8.0655,111.9027],
+  'kabupaten trenggalek':[-8.0487,111.7073],
+  'kabupaten ponorogo':[-7.8674,111.463],
+  'kabupaten gresik':[-7.1575,112.6559],
+  'kabupaten mojokerto':[-7.4706,112.4339],
+  'kota mojokerto':[-7.4706,112.4339],
+  'kabupaten jombang':[-7.5456,112.2384],
+  'kabupaten pamekasan':[-7.1574,113.4785],
+  'kabupaten sumenep':[-6.9999,113.8585],
+  'kabupaten sampang':[-7.184,113.2394],
+  'kabupaten bangkalan':[-7.0354,112.7305],
+  'kabupaten pacitan':[-8.1977,111.1043],
+};
+
+function updateMap(data){
+  markers.forEach(m=>m.remove()); markers=[];
+  if(!data||data.length===0) return;
+
+  /* Sort untuk get top areas */
+  const sorted=[...data].sort((a,b)=>b.major_rate-a.major_rate);
+
+  data.forEach(item=>{
+    const key=(item.kota_kabupaten||'').toLowerCase();
+    const c=COORDS[key]; if(!c) return;
+    const rate=item.major_rate||0;
+    const col=majorRateToColor(rate);
+    /* radius proporsional seperti dashboard operasional */
+    const r=Math.max(10,Math.min(28,10+rate*0.22));
+
+    const m=L.circleMarker(c,{
+      radius:r,fillColor:col,
+      color:'rgba(255,255,255,0.9)',weight:2,
+      fillOpacity:0.88,opacity:1
+    }).addTo(map);
+
+    /* Label major rate di dalam circle (seperti dashboard operasional) */
+    const tooltip=L.tooltip({
+      permanent:true,direction:'center',
+      className:'circle-label',offset:[0,0]
+    }).setContent(`<span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:10px;font-weight:700;color:#fff">${rate.toFixed(1)}%</span>`);
+    m.bindTooltip(tooltip);
+
+    m.bindPopup(`
+      <div style="font-family:'Plus Jakarta Sans',sans-serif;padding:6px 4px;min-width:160px">
+        <div style="font-weight:700;font-size:13px;margin-bottom:6px;color:#111">${item.kota_kabupaten}</div>
+        <div style="font-size:11px;color:#555;margin-bottom:3px">Major Rate: <b style="color:#E31E24">${rate}%</b></div>
+        <div style="font-size:11px;color:#555;margin-bottom:3px">Major: ${item.major} record</div>
+        <div style="font-size:11px;color:#555;margin-bottom:3px">Minor: ${item.minor} record</div>
+        <div style="font-size:11px;color:#555">Total: ${item.total} record</div>
+      </div>
+    `);
+    markers.push(m);
+  });
+
+  /* custom label CSS */
+  if(!document.getElementById('circle-label-style')){
+    const s=document.createElement('style');
+    s.id='circle-label-style';
+    s.textContent='.circle-label{background:transparent!important;border:none!important;box-shadow:none!important;padding:0!important}.circle-label::before{display:none!important}';
+    document.head.appendChild(s);
+  }
+}
+
+/* ── CONTROLS ───────────────────────────────────────── */
+const selK=document.getElementById('selKota');
+const selS=document.getElementById('selSite');
+const btnP=document.getElementById('btnP');
+const spin=document.getElementById('spin');
+const btnT=document.getElementById('btnTxt');
+
+selK.addEventListener('change',async()=>{
+  const kota=selK.value;
+  selS.innerHTML='<option value="">— Pilih Site —</option>';
+  selS.disabled=true; btnP.disabled=true;
+  if(!kota) return;
+  try{
+    const r=await fetch(`/api/sites?kota=${encodeURIComponent(kota)}`);
+    const sites=await r.json();
+    sites.forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;selS.appendChild(o);});
+    selS.disabled=false;
+  }catch(e){console.error(e)}
+});
+selS.addEventListener('change',()=>{btnP.disabled=!selS.value});
+
+btnP.addEventListener('click',async()=>{
+  const kota=selK.value,site=selS.value;
+  if(!kota||!site) return;
+  spin.style.display='block'; btnT.textContent='Memproses…'; btnP.disabled=true;
+  try{
+    const r=await fetch(`/api/predict?kota=${encodeURIComponent(kota)}&site=${encodeURIComponent(site)}`);
+    const d=await r.json();
+    if(d.error){alert(d.error);return;}
+
+    document.getElementById('emptyState').style.display='none';
+    const rs=document.getElementById('results');
+    rs.classList.remove('show'); void rs.offsetWidth; rs.classList.add('show');
+
+    const sev=d.predicted_severity,sevL=sev.toLowerCase();
+
+    document.getElementById('predCard').className=`pred-card ${sevL}`;
+    const pb=document.getElementById('predBadge');
+    pb.className=`pred-badge ${sevL}`;
+    document.getElementById('predSev').textContent=sev.toUpperCase();
+    document.getElementById('pConf').textContent=d.confidence_score;
+
+    document.getElementById('sTotal').textContent=d.total_records;
+    document.getElementById('sMajor').textContent=d.major_count;
+    document.getElementById('sMinor').textContent=d.minor_count;
+
+    const pct=d.total_records>0?(d.major_count/d.total_records*100).toFixed(1):'0.0';
+    document.getElementById('majorPctLbl').textContent=`Major (${pct}%)`;
+    const bf=document.getElementById('barFill');
+    bf.style.width=pct+'%'; bf.className=`bar-fill ${sevL}`;
+
+    const tbody=document.getElementById('hBody'); tbody.innerHTML='';
+    if(!d.histori||d.histori.length===0){
+      tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:22px;color:var(--gray-400)">Tidak ada histori</td></tr>';
+    }else{
+      d.histori.forEach(row=>{
+        const isMaj=row.predicted_severity==='Major';
+        const isActMaj=row.actual_severity==='Major';
+        tbody.innerHTML+=`<tr>
+          <td style="font-weight:600;color:var(--black)">${row.month}</td>
+          <td>${row.scope_of_work}</td>
+          <td><span class="badge ${isActMaj?'bm':'bn'}">${row.actual_severity}</span></td>
+          <td><span class="badge ${isMaj?'bm':'bn'}">${row.predicted_severity}</span></td>
+          <td style="font-weight:600">${row.confidence_score}</td>
+        </tr>`;
+      });
+    }
+
+    document.getElementById('sInfo').style.display='block';
+    document.getElementById('iKota').textContent=d.kota;
+    document.getElementById('iSite').textContent=d.site;
+    document.getElementById('iTotal').textContent=d.total_records+' records';
+
+    initMap();
+    const mr=await fetch('/api/map-data');
+    const md=await mr.json();
+    updateMap(md);
+
+  }catch(e){alert('Terjadi kesalahan. Coba lagi.');console.error(e);}
+  finally{spin.style.display='none';btnT.textContent='Prediksi Severity';btnP.disabled=false;}
+});
+</script>
+</body>
+</html>
